@@ -1,115 +1,113 @@
-// BMP-loading example specifically for the TFTLCD breakout board.
-// If using the Arduino shield, use the tftbmp_shield.pde sketch instead!
-// If using an Arduino Mega, make sure the SD library is configured for
-// 'soft' SPI in the file Sd2Card.h.
-
 #include <SPFD5408_Adafruit_GFX.h>    // Core graphics library
 #include <SPFD5408_Adafruit_TFTLCD.h> // Hardware-specific library
 #include <SPI.h>
 #include <SD.h>
+#include <SPFD5408_TouchScreen.h>
 
-// The control pins for the LCD can be assigned to any digital or
-// analog pins...but we'll use the analog pins as this allows us to
-// double up the pins with the touch screen (see the TFT paint example).
+
 #define LCD_CS A3 // Chip Select goes to Analog 3
 #define LCD_CD A2 // Command/Data goes to Analog 2
 #define LCD_WR A1 // LCD Write goes to Analog 1
 #define LCD_RD A0 // LCD Read goes to Analog 0
 
-// When using the BREAKOUT BOARD only, use these 8 data lines to the LCD:
-// For the Arduino Uno, Duemilanove, Diecimila, etc.:
-//   D0 connects to digital pin 8  (Notice these are
-//   D1 connects to digital pin 9   NOT in order!)
-//   D2 connects to digital pin 2
-//   D3 connects to digital pin 3
-//   D4 connects to digital pin 4
-//   D5 connects to digital pin 5
-//   D6 connects to digital pin 6
-//   D7 connects to digital pin 7
-// For the Arduino Mega, use digital pins 22 through 29
-// (on the 2-row header at the end of the board).
-
-// For Arduino Mega
-//  connect the SD card with CS going to pin 53, DI going to pin 51, DO going to pin 50 and SCK going to pin 52 (standard)
-
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
 
 #define SD_CS 53     // Set the chip select line to whatever you use
-
 #else
-
-// For Arduino Uno/Duemilanove, etc
-//  connect the SD card with DI going to pin 11, DO going to pin 12 and SCK going to pin 13 (standard)
-//  Then pin 10 goes to CS (or whatever you have set up)
-
 #define SD_CS 10     // Set the chip select line to whatever you use (10 doesnt conflict with the library)
-
 #endif
 
-// our TFT wiring
+#define XP 8
+#define XM A2
+#define YP A3
+#define YM 9
+
+
+#define TS_LEFT 135
+#define TS_RT 925
+#define TS_TOP 127
+#define TS_BOT 907
+
 Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, A4);
+TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
+
+Adafruit_GFX_Button on_btn, off_btn;
+
+#define MINPRESSURE 200
+#define MAXPRESSURE 1000
+
+#define BLACK   0x0000
+#define BLUE    0x001F
+#define RED     0xF800
+#define GREEN   0x07E0
+#define CYAN    0x07FF
+#define MAGENTA 0xF81F
+#define YELLOW  0xFFE0
+#define WHITE   0xFFFF
+
+
+#define MAX_X 320
+#define MAX_Y 240
+
+
+int pixel_x, pixel_y; 
 
 void setup()
 {
   Serial.begin(9600);
-   digitalWrite(35, HIGH);         //I use this on mega for LCD Backlight
   tft.reset();
-
   uint16_t identifier = tft.readID();
-
-  if(identifier == 0x9325) {
-    progmemPrintln(PSTR("Found ILI9325 LCD driver"));
-  } else if(identifier == 0x9328) {
-    progmemPrintln(PSTR("Found ILI9328 LCD driver"));
-  } else if(identifier == 0x7575) {
-    progmemPrintln(PSTR("Found HX8347G LCD driver"));
-  } else {
-    progmemPrint(PSTR("Unknown LCD driver chip: "));
-    Serial.println(identifier, HEX);
-    progmemPrintln(PSTR("If using the Adafruit 2.8\" TFT Arduino shield, the line:"));
-    progmemPrintln(PSTR("  #define USE_ADAFRUIT_SHIELD_PINOUT"));
-    progmemPrintln(PSTR("should appear in the library header (Adafruit_TFT.h)."));
-    progmemPrintln(PSTR("If using the breakout board, it should NOT be #defined!"));
-    progmemPrintln(PSTR("Also if using the breakout, double-check that all wiring"));
-    progmemPrintln(PSTR("matches the tutorial."));
-    //return;
-  }
-
   tft.begin(identifier);
-
+  
   progmemPrint(PSTR("Initializing SD card..."));
   if (!SD.begin(SD_CS)) {
     progmemPrintln(PSTR("failed!"));
     return;
   }
   progmemPrintln(PSTR("OK!"));
-
-  bmpDraw("woof.bmp", 0, 0);
-  delay(1000);
+  tft.fillScreen(0);
+  tft.setRotation(1);
+  draw_ui();
 }
 
-void loop()
+void draw_ui()
 {
-  for(int i = 0; i<4; i++) {
-    tft.setRotation(i);
-    tft.fillScreen(0);
-    for(int j=0; j <= 200; j += 50) {
-      bmpDraw("miniwoof.bmp", j, j);
-    }
-    delay(1000);
-  }
+    bmpDraw("home.bmp", MAX_X-45, 5);
+    bmpDraw("question.bmp", MAX_X-45, 45);
+    
 }
 
-// This function opens a Windows Bitmap (BMP) file and
-// displays it at the given coordinates.  It's sped up
-// by reading many pixels worth of data at a time
-// (rather than pixel by pixel).  Increasing the buffer
-// size takes more of the Arduino's precious RAM but
-// makes loading a little faster.  20 pixels seems a
-// good balance.
+
+void loop()//////////////////////////////////////////////////////////////////////////////////////////
+{
+   bool down = Touch_getXY();  
+   on_btn.press(down && on_btn.contains(pixel_x, pixel_y));   
+
+}//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+bool Touch_getXY(void)
+{
+    TSPoint p = ts.getPoint();
+    //p.x = 1048-p.x;
+   // p.y -= 142;
+    pinMode(YP, OUTPUT);      //restore shared pins
+    pinMode(XM, OUTPUT);
+    digitalWrite(YP, HIGH);   //because TFT control pins
+    digitalWrite(XM, HIGH);
+    bool pressed = (p.z > MINPRESSURE && p.z < MAXPRESSURE);
+    if (pressed) {
+        pixel_x = map(p.y, TS_LEFT, TS_RT, 0, tft.width()); //.kbv makes sense to me
+        pixel_y = map(p.x, TS_TOP, TS_BOT, 0, tft.height());
+        Serial.print(pixel_x);
+        Serial.print("      ");
+        Serial.print(pixel_y);
+        Serial.println();
+    }   
+    return pressed;
+}
+
 
 #define BUFFPIXEL 20
-
 void bmpDraw(char *filename, int x, int y) {
 
   File     bmpFile;
@@ -130,11 +128,6 @@ void bmpDraw(char *filename, int x, int y) {
 
   if((x >= tft.width()) || (y >= tft.height())) return;
 
-  Serial.println();
-  progmemPrint(PSTR("Loading image '"));
-  Serial.print(filename);
-  Serial.println('\'');
-  // Open requested file on SD card
   if ((bmpFile = SD.open(filename)) == NULL) {
     progmemPrintln(PSTR("File not found"));
     return;

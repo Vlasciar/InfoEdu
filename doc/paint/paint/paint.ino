@@ -185,10 +185,6 @@ void setup(void) {
 
 void loop()
 {
-  delay(2700);
-  analogWrite(A5,0);
-  delay(2700);
-  analogWrite(A5,255);
   digitalWrite(13, HIGH);
   TSPoint p = ts.getPoint();
   digitalWrite(13, LOW);
