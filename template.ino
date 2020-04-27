@@ -58,11 +58,6 @@ struct BTN {
 } homeb, helpb;
 
 int pressCD = 0;
-
-uint8_t l_array[100]; 
-uint8_t l_size = 100;
-uint8_t l_scale;
-
 void setup()
 {
   Serial.begin(9600);
@@ -79,8 +74,6 @@ void setup()
   tft.fillScreen(0);
   tft.setRotation(1);
   draw_ui();
-  l_setup();
-  l_update();
 }
 
 
@@ -105,19 +98,6 @@ bool is_pressed(BTN btn)
   return false;
 }
 
-void l_setup()
-{
-  for(int i=0; i<l_size;i++)
-    l_array[i] = (random(1, 240));
-  l_scale = 270/l_size;
-}
-
-void l_update()
-{
-  
-  for(int i=0; i<l_size;i++)
-    tft.drawRect(l_scale*i, MAX_Y - l_array[i], l_scale, l_array[i], WHITE);
-}
 void loop()//////////////////////////////////////////////////////////////////////////////////////////
 {
   if (Touch_getXY())
