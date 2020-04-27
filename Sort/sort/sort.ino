@@ -55,13 +55,17 @@ int pixel_x, pixel_y;
 struct BTN {
   int top, bot, lft, rgt;
   int w, h;
-} homeb, helpb;
+} homeb, infob, pauseb, playb, parb;
 
 int pressCD = 0;
 
-uint8_t l_array[250]; 
+uint8_t l_array[250];
 uint8_t l_size = 100;
 uint8_t l_scale;
+
+bool isRunning = false;
+bool isShowingPar = false;
+bool isShowingInfo = false;
 
 void setup()
 {
@@ -78,7 +82,7 @@ void setup()
   progmemPrintln(PSTR("OK!"));
   tft.fillScreen(0);
   tft.setRotation(1);
-  draw_ui();
+
 }
 
 
@@ -86,87 +90,115 @@ void draw_ui()
 {
 
   bmpDraw(homeb, "home.bmp", MAX_X - 45, 5);
-  bmpDraw(helpb, "question.bmp", MAX_X - 45, 45);
+  bmpDraw(infob, "info.bmp", MAX_X - 45, 45);
+  bmpDraw(parb, "par.bmp", MAX_X - 45, 85);
+  isRunning != isRunning;
+  if (isRunning) bmpDraw(pauseb, "pause.bmp", MAX_X - 45, MAX_Y - 45);
+  else bmpDraw(playb, "play.bmp", MAX_X - 45, MAX_Y - 45);
+
 
 }
 
 bool is_pressed(BTN btn)
 {
-  if (pressCD > 500)
+  if (pixel_x > btn.lft && pixel_x < btn.rgt && pixel_y < btn.bot && pixel_y > btn.top)
   {
-    if(pixel_x>btn.lft && pixel_x<btn.rgt && pixel_y<btn.bot && pixel_y>btn.top)
-    {
-      pressCD=0;
-      return true;    
-    }
+    pressCD = 0;
+    return true;
   }
   return false;
 }
 
 void l_setup()
 {
-  for(int i=0; i<l_size;i++)
+  for (int i = 0; i < l_size; i++)
     l_array[i] = (random(1, 240));
-  l_scale = 270/l_size;
+  l_scale = 270 / l_size;
 }
 
 void l_update()
 {
   tft.drawRect(0, 0, 250, 240, BLACK);
-  for(int i=0; i<l_size;i++)
-    tft.drawRect(l_scale*i, MAX_Y - l_array[i], l_scale, l_array[i], WHITE);
+  for (int i = 0; i < l_size; i++)
+    tft.drawRect(l_scale * i, MAX_Y - l_array[i], l_scale, l_array[i], WHITE);
 }
 
-void l_selectionSort()  
-{  
-    uint8_t i, j, min_idx;   
-    // One by one move boundary of unsorted subarray  
-    for (i = 0; i < l_size-1; i++)  
-    {  
-        tft.drawRect(l_scale*i, MAX_Y - l_array[i], l_scale, l_array[i], GREEN);
-        // Find the minimum element in unsorted array  
-        min_idx = i;  
-        for (j = i+1; j < l_size; j++)  
-        if (l_array[j] < l_array[min_idx])
-        {
-            tft.drawRect(l_scale*j, MAX_Y - l_array[j], l_scale, l_array[j], RED);
-            tft.drawRect(l_scale*min_idx, MAX_Y - l_array[min_idx], l_scale, l_array[min_idx], WHITE);
-            min_idx = j; 
-            delay(25); 
-        }
-           
-  
-        // Swap the found minimum element with the first element  
-        tft.drawRect(l_scale*min_idx, MAX_Y - l_array[min_idx], l_scale, l_array[min_idx], WHITE);
-        tft.drawRect(l_scale*i, 0, l_scale, MAX_Y, BLACK);        
-        uint8_t temp = l_array[min_idx];
-        l_array[min_idx] = l_array[i];
-        l_array[i] = temp;
-        tft.drawRect(l_scale*i, MAX_Y - l_array[i], l_scale, l_array[i], GREEN);
+void l_selectionSort()
+{
+  uint8_t i, j, min_idx;
+  // One by one move boundary of unsorted subarray
+  for (i = 0; i < l_size - 1; i++)
+  {
+    tft.drawRect(l_scale * i, MAX_Y - l_array[i], l_scale, l_array[i], GREEN);
+    // Find the minimum element in unsorted array
+    min_idx = i;
+    for (j = i + 1; j < l_size; j++)
+    {
+      check_presses();
+      while (!isRunning)
+      {
+        check_presses();
+      }
+      if (l_array[j] < l_array[min_idx])
+      {
+        tft.drawRect(l_scale * j, MAX_Y - l_array[j], l_scale, l_array[j], RED);
+        tft.drawRect(l_scale * min_idx, MAX_Y - l_array[min_idx], l_scale, l_array[min_idx], WHITE);
+        min_idx = j;
         delay(25);
-    }     
-}  
+      }
+
+    }
+      // Swap the found minimum element with the first element
+      tft.drawRect(l_scale * min_idx, MAX_Y - l_array[i], l_scale, l_array[i], WHITE);
+      tft.drawRect(l_scale * i, 0, l_scale, MAX_Y, BLACK);
+      uint8_t temp = l_array[min_idx];
+      l_array[min_idx] = l_array[i];
+      l_array[i] = temp;
+      tft.drawRect(l_scale * i, MAX_Y - l_array[i], l_scale, l_array[i], GREEN);
+     // delay(25);
+    
+  }
+}
+
+void check_presses()
+{
+  if (pressCD > 250)
+  {
+    if (Touch_getXY())
+    {
+      if (is_pressed(homeb))
+      {
+        Serial.println("Take me home");
+      }
+      if (is_pressed(infob))
+      {
+        isShowingInfo = true;
+        Serial.println("Send help");
+      }
+      if (is_pressed(parb))
+      {
+        isShowingInfo = true;
+        Serial.println("Settings");
+      }
+      if (is_pressed(playb))
+      {
+        isRunning = !isRunning;
+        if (isRunning) bmpDraw(pauseb, "pause.bmp", MAX_X - 45, MAX_Y - 45);
+        else bmpDraw(playb, "play.bmp", MAX_X - 45, MAX_Y - 45);
+      }
+    }
+  }
+  pressCD++;
+}
 
 void loop()//////////////////////////////////////////////////////////////////////////////////////////
 {
   tft.fillRect(0, 0, 250, 240, BLACK);
-    l_setup();
+  draw_ui();
+  l_setup();
   l_update();
-    l_selectionSort() ;
-  
-  if (Touch_getXY())
-  {
-    if (is_pressed(homeb))
-    {
-      Serial.println("Take me home");
-    }
-    if (is_pressed(helpb))
-    {
-      Serial.println("Send help");
-    }
-  }
-  
-  pressCD++;
+  l_selectionSort() ;
+  isRunning = false;
 }//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 bool Touch_getXY(void)
@@ -182,10 +214,10 @@ bool Touch_getXY(void)
   if (pressed) {
     pixel_x = map(p.y, TS_LEFT, TS_RT, 0, tft.width()); //.kbv makes sense to me
     pixel_y = map(p.x, TS_TOP, TS_BOT, 0, tft.height());
-   /* Serial.print(pixel_x);
-    Serial.print("      ");
-    Serial.print(pixel_y);
-    Serial.println();*/
+    /* Serial.print(pixel_x);
+      Serial.print("      ");
+      Serial.print(pixel_y);
+      Serial.println();*/
   }
   return pressed;
 }
@@ -256,14 +288,8 @@ void bmpDraw(BTN& btn, char *filename, int x, int y) {
         // Set TFT address window to clipped image bounds
         tft.setAddrWindow(x, y, x + w - 1, y + h - 1);
 
-        for (row = 0; row < h; row++) { // For each scanline...
-          // Seek to start of scan line.  It might seem labor-
-          // intensive to be doing this on every line, but this
-          // method covers a lot of gritty details like cropping
-          // and scanline padding.  Also, the seek only takes
-          // place if the file position actually needs to change
-          // (avoids a lot of cluster math in SD library).
-          if (flip) // Bitmap is stored bottom-to-top order (normal BMP)
+        for (row = 0; row < h; row++) { 
+          if (flip) 
             pos = bmpImageoffset + (bmpHeight - 1 - row) * rowSize;
           else     // Bitmap is stored top-to-bottom
             pos = bmpImageoffset + row * rowSize;
@@ -296,9 +322,6 @@ void bmpDraw(BTN& btn, char *filename, int x, int y) {
         if (lcdidx > 0) {
           tft.pushColors(lcdbuffer, lcdidx, first);
         }
-        progmemPrint(PSTR("Loaded in "));
-        Serial.print(millis() - startTime);
-        Serial.println(" ms");
       } // end goodBmp
     }
   }
