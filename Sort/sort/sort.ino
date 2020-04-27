@@ -59,7 +59,7 @@ struct BTN {
 
 int pressCD = 0;
 
-uint8_t l_array[100]; 
+uint8_t l_array[250]; 
 uint8_t l_size = 100;
 uint8_t l_scale;
 
@@ -79,8 +79,6 @@ void setup()
   tft.fillScreen(0);
   tft.setRotation(1);
   draw_ui();
-  l_setup();
-  l_update();
 }
 
 
@@ -114,12 +112,48 @@ void l_setup()
 
 void l_update()
 {
-  
+  tft.drawRect(0, 0, 250, 240, BLACK);
   for(int i=0; i<l_size;i++)
     tft.drawRect(l_scale*i, MAX_Y - l_array[i], l_scale, l_array[i], WHITE);
 }
+
+void l_selectionSort()  
+{  
+    uint8_t i, j, min_idx;   
+    // One by one move boundary of unsorted subarray  
+    for (i = 0; i < l_size-1; i++)  
+    {  
+        tft.drawRect(l_scale*i, MAX_Y - l_array[i], l_scale, l_array[i], GREEN);
+        // Find the minimum element in unsorted array  
+        min_idx = i;  
+        for (j = i+1; j < l_size; j++)  
+        if (l_array[j] < l_array[min_idx])
+        {
+            tft.drawRect(l_scale*j, MAX_Y - l_array[j], l_scale, l_array[j], RED);
+            tft.drawRect(l_scale*min_idx, MAX_Y - l_array[min_idx], l_scale, l_array[min_idx], WHITE);
+            min_idx = j; 
+            delay(25); 
+        }
+           
+  
+        // Swap the found minimum element with the first element  
+        tft.drawRect(l_scale*min_idx, MAX_Y - l_array[min_idx], l_scale, l_array[min_idx], WHITE);
+        tft.drawRect(l_scale*i, 0, l_scale, MAX_Y, BLACK);        
+        uint8_t temp = l_array[min_idx];
+        l_array[min_idx] = l_array[i];
+        l_array[i] = temp;
+        tft.drawRect(l_scale*i, MAX_Y - l_array[i], l_scale, l_array[i], GREEN);
+        delay(25);
+    }     
+}  
+
 void loop()//////////////////////////////////////////////////////////////////////////////////////////
 {
+  tft.fillRect(0, 0, 250, 240, BLACK);
+    l_setup();
+  l_update();
+    l_selectionSort() ;
+  
   if (Touch_getXY())
   {
     if (is_pressed(homeb))
@@ -131,7 +165,7 @@ void loop()/////////////////////////////////////////////////////////////////////
       Serial.println("Send help");
     }
   }
-
+  
   pressCD++;
 }//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
