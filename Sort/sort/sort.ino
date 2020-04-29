@@ -62,7 +62,9 @@ int pressCD = 0;
 uint8_t l_array[250];
 uint8_t l_size = 100;
 uint8_t l_scale;
-uint8_t minvl = 120,maxvl = 240;
+uint8_t minvl = 0,maxvl = 240;
+bool p_random = false;
+bool p_reversed = true;
 
 bool isRunning = false;
 bool isShowingPar = false;
@@ -112,9 +114,16 @@ bool is_pressed(BTN btn)
 
 void l_setup()
 {
-  for (int i = 0; i < l_size; i++)
-    l_array[i] = (random(1, 240));
   l_scale = 270 / l_size;
+  if(p_random)
+  {
+    for (int i = 0; i < l_size; i++)
+       l_array[i] = (random(minvl, maxvl));
+  }
+  else{
+    for (int i = 0; i < l_size; i++)
+       l_array[i] = map(i,l_size, 0,minvl, maxvl);
+  }  
 }
 
 void l_update()
@@ -125,8 +134,6 @@ void l_update()
 }
 
 BTN par_sz, par_min, par_max, par_rand, par_rev;
-bool p_random = true;
-bool p_reversed = false;
 uint8_t p_sz, p_minvl, p_maxvl;
 
 void draw_param()
@@ -188,7 +195,7 @@ void draw_param()
 void par_screen()
 {
   tft.fillRect(0, 0, 320, 240, BLACK);
-  bmpDraw(parb, "par.bmp", MAX_X - 45, MAX_Y - 50);
+  bmpDraw(parb, "exit.bmp", MAX_X - 45, MAX_Y - 50);
   bmpDraw(homeb, "home.bmp", MAX_X - 45, 5);
   bmpDraw(infob, "info.bmp", MAX_X - 45, 45);
   bool first = true;
@@ -284,7 +291,7 @@ void l_selectionSort()
     min_idx = i;
     for (j = i + 1; j < l_size; j++)
     {
-      check_presses(250);
+      check_presses(0);
       while (!isRunning)
       {
         check_presses(250);
