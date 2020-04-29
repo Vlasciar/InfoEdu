@@ -62,6 +62,7 @@ int pressCD = 0;
 uint8_t l_array[250];
 uint8_t l_size = 100;
 uint8_t l_scale;
+uint8_t minvl = 120,maxvl = 240;
 
 bool isRunning = false;
 bool isShowingPar = false;
@@ -126,6 +127,8 @@ void l_update()
 BTN par_sz, par_min, par_max, par_rand, par_rev;
 bool p_random = true;
 bool p_reversed = false;
+uint8_t p_sz, p_minvl, p_maxvl;
+
 void draw_param()
 {
   tft.fillRect(0, 0, 270, 240, BLACK);
@@ -134,7 +137,16 @@ void draw_param()
   tft.drawRect(par_max.lft, par_max.top, par_max.w, par_max.h, GREEN);
   tft.drawRect(par_rand.lft, par_rand.top, par_rand.w, par_rand.h, GREEN);
   tft.drawRect(par_rev.lft, par_rev.top, par_rev.w, par_rev.h, GREEN);
+
+  tft.fillRect(par_sz.lft+1, par_sz.top+1, par_sz.rgt-par_sz.lft-2, 8, BLACK);
+  tft.fillRect(par_sz.lft+1, par_sz.top+1, p_sz -par_sz.lft -2, 8, GREEN);
   
+  tft.fillRect(par_min.lft+1, par_min.top+1, par_min.rgt-par_min.lft-2, 8, BLACK);
+  tft.fillRect(par_min.lft+1, par_min.top+1, p_minvl -par_min.lft -2, 8, GREEN);
+  
+  tft.fillRect(par_max.lft+1, par_max.top+1, par_max.rgt - par_max.lft-2, 8, BLACK);
+  tft.fillRect(par_max.lft+1, par_max.top+1, p_maxvl -par_max.lft -2, 8, GREEN);
+    
   tft.setTextSize(2);
   tft.setCursor(25, 25);
   tft.println("Array size:");
@@ -159,7 +171,7 @@ void draw_param()
   tft.setCursor(225, 100);
   tft.println("120");
 
-  tft.setCursor(5-, 150);
+  tft.setCursor(5, 150);
   tft.println("120");
   tft.setCursor(225, 150);
   tft.println("240");
@@ -215,6 +227,10 @@ void par_screen()
   par_rev.w = par_rev.rgt - par_rev.lft;
   par_rev.h = par_rev.bot - par_rev.top;
   
+  p_sz = l_size;
+  p_minvl = map(minvl, 0, 120, par_min.lft, par_min.rgt);
+  p_maxvl = map(maxvl, 120, 240, par_max.lft, par_max.rgt);
+  
   draw_param();
   while (isShowingPar)
   {
@@ -234,11 +250,25 @@ void par_screen()
         p_reversed = true;
         draw_param();
       }
-      if (is_pressed(par_sz) || is_pressed(par_min) || is_pressed(par_max))
-      {
-
+      if (is_pressed(par_sz))
+      {     
+        p_sz = pixel_x;       
+        l_size = map(pixel_x, par_sz.lft, par_sz.rgt, 100, 250);
+        l_scale = 270 / l_size;
+        draw_param();
       }
-
+      if (is_pressed(par_min))
+      {     
+        p_minvl = pixel_x;       
+        minvl = map(pixel_x, par_min.lft, par_min.rgt, 0, 120);
+        draw_param();
+      }
+      if (is_pressed(par_max))
+      {     
+        p_maxvl = pixel_x;       
+        maxvl = map(pixel_x, par_max.lft, par_max.rgt, 120, 240);
+        draw_param();
+      }
     }
   }
 }
