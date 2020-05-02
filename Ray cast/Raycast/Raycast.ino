@@ -53,20 +53,17 @@ int pixel_x, pixel_y;
 struct BTN {
   int top, bot, lft, rgt;
   int w, h;
-} homeb, infob, pauseb, playb, parb, infoback, inforgt, infolft, infoext;
+} homeb, infob, restb, infoback, inforgt, infolft, infoext , parb, par_sz;
 
 uint32_t pressCD = 0;
 
-uint8_t l_array[250];
-uint8_t l_size = 100;
-uint8_t l_scale;
-uint8_t minvl = 0, maxvl = 240;
-bool p_random = false;
-bool p_reversed = true;
+uint8_t l_array[25][4];//X1 Y1     X2 Y2
+uint8_t l_size = 10;
 
-bool isRunning = false;
-bool isShowingPar = false;
 bool isShowingInfo = false;
+bool isShowingPar = false;
+
+int16_t posX, posY;
 
 void setup()
 {
@@ -80,21 +77,17 @@ void setup()
   }
   tft.fillScreen(0);
   tft.setRotation(1);
-
+  posX = MAX_X / 2;
+  posY = MAX_Y / 2;
 }
 
 
 void draw_ui()
 {
-
   bmpDraw(homeb, "home.bmp", MAX_X - 45, 5);
   bmpDraw(infob, "info.bmp", MAX_X - 45, 45);
   bmpDraw(parb, "par.bmp", MAX_X - 45, 85);
-  isRunning != isRunning;
-  if (isRunning) bmpDraw(pauseb, "pause.bmp", MAX_X - 45, MAX_Y - 45);
-  else bmpDraw(playb, "play.bmp", MAX_X - 45, MAX_Y - 45);
-
-
+  bmpDraw(restb, "play.bmp", MAX_X - 45, MAX_Y - 45);
 }
 
 bool is_pressed(BTN btn)
@@ -106,93 +99,52 @@ bool is_pressed(BTN btn)
   }
   return false;
 }
-
-void l_setup()
-{
-  l_scale = 270 / l_size;
-  if (p_random)
-  {
-    for (int i = 0; i < l_size; i++)
-      l_array[i] = (random(minvl, maxvl));
-  }
-  else {
-    for (int i = 0; i < l_size; i++)
-      l_array[i] = map(i, l_size, 0, minvl, maxvl);
-  }
-}
-
 void l_update()
 {
-  tft.drawRect(0, 0, 250, 240, BLACK);
-  for (int i = 0; i < l_size; i++)
-    tft.drawRect(l_scale * i, MAX_Y - l_array[i], l_scale, l_array[i], WHITE);
+  tft.fillRect(0, 0, MAX_X - 50 + 1, MAX_Y, BLACK);
+  for (uint8_t i = 0; i < l_size; i++)
+  {
+    tft.drawLine(l_array[i][0], l_array[i][1], l_array[i][2], l_array[i][3], RED);
+  }
+}
+void l_setup()
+{
+  tft.fillRect(0, 0, MAX_X - 50 + 1, MAX_Y, BLACK);
+  for (uint8_t i = 0; i < l_size; i++)
+  {
+    l_array[i][0] = random(0, MAX_X - 50);
+    l_array[i][1] = random(0, MAX_Y);
+    l_array[i][2] = random(0, MAX_X - 50);
+    l_array[i][3] = random(0, MAX_Y);
+    tft.drawLine(l_array[i][0], l_array[i][1], l_array[i][2], l_array[i][3], RED);
+  }
 }
 
-BTN par_sz, par_min, par_max, par_rand, par_rev;
-uint8_t p_sz, p_minvl, p_maxvl;
-
+uint8_t p_sz;
 void draw_param()
 {
   tft.fillRect(0, 0, 270, 240, BLACK);
   tft.drawRect(par_sz.lft, par_sz.top, par_sz.w, par_sz.h, GREEN);
-  tft.drawRect(par_min.lft, par_min.top, par_min.w, par_min.h, GREEN);
-  tft.drawRect(par_max.lft, par_max.top, par_max.w, par_max.h, GREEN);
-  tft.drawRect(par_rand.lft, par_rand.top, par_rand.w, par_rand.h, GREEN);
-  tft.drawRect(par_rev.lft, par_rev.top, par_rev.w, par_rev.h, GREEN);
 
   tft.fillRect(par_sz.lft + 1, par_sz.top + 1, par_sz.rgt - par_sz.lft - 2, 8, BLACK);
   tft.fillRect(par_sz.lft + 1, par_sz.top + 1, p_sz - par_sz.lft - 2, 8, GREEN);
 
-  tft.fillRect(par_min.lft + 1, par_min.top + 1, par_min.rgt - par_min.lft - 2, 8, BLACK);
-  tft.fillRect(par_min.lft + 1, par_min.top + 1, p_minvl - par_min.lft - 2, 8, GREEN);
-
-  tft.fillRect(par_max.lft + 1, par_max.top + 1, par_max.rgt - par_max.lft - 2, 8, BLACK);
-  tft.fillRect(par_max.lft + 1, par_max.top + 1, p_maxvl - par_max.lft - 2, 8, GREEN);
 
   tft.setTextSize(2);
   tft.setCursor(25, 25);
-  tft.println("Array size:");
-  tft.setCursor(25, 75);
-  tft.println("Min value:");
-  tft.setCursor(25, 125);
-  tft.println("Max value:");
-
-  tft.setTextSize(1);
-  tft.setCursor(75, 175);
-  tft.println("Random:");
-  tft.setCursor(150, 175);
-  tft.println("Reversed:");
+  tft.println("Number of lines:");
 
   tft.setCursor(5, 50);
-  tft.println("25");
+  tft.println("3");
   tft.setCursor(225, 50);
-  tft.println("250");
+  tft.println("25");
 
-  tft.setCursor(5, 100);
-  tft.println("0");
-  tft.setCursor(225, 100);
-  tft.println("120");
-
-  tft.setCursor(5, 150);
-  tft.println("120");
-  tft.setCursor(225, 150);
-  tft.println("240");
-
-  tft.setTextSize(5);
-
-  tft.setCursor(83, 187);
-  if (p_random)
-    tft.println("X");
-  tft.setCursor(162, 187);
-  if (p_reversed)
-    tft.println("X");
 }
+
 void par_screen()
 {
   tft.fillRect(0, 0, 320, 240, BLACK);
   bmpDraw(parb, "exit.bmp", MAX_X - 45, MAX_Y - 50);
-  bmpDraw(homeb, "home.bmp", MAX_X - 45, 5);
-  bmpDraw(infob, "info.bmp", MAX_X - 45, 45);
   bool first = true;
   par_sz.top = 50;
   par_sz.bot = 60;
@@ -201,37 +153,7 @@ void par_screen()
   par_sz.w = par_sz.rgt - par_sz.lft;
   par_sz.h = par_sz.bot - par_sz.top;
 
-  par_min.top = 100;
-  par_min.bot = 110;
-  par_min.lft = 30;
-  par_min.rgt = 220;
-  par_min.w = par_min.rgt - par_min.lft;
-  par_min.h = par_min.bot - par_min.top;
-
-  par_max.top = 150;
-  par_max.bot = 160;
-  par_max.lft = 30;
-  par_max.rgt = 220;
-  par_max.w = par_max.rgt - par_max.lft;
-  par_max.h = par_max.bot - par_max.top;
-
-  par_rand.top = 185;
-  par_rand.bot = 225;
-  par_rand.lft = 75;
-  par_rand.rgt = 115;
-  par_rand.w = par_rand.rgt - par_rand.lft;
-  par_rand.h = par_rand.bot - par_rand.top;
-
-  par_rev.top = 185;
-  par_rev.bot = 225;
-  par_rev.lft = 155;
-  par_rev.rgt = 195;
-  par_rev.w = par_rev.rgt - par_rev.lft;
-  par_rev.h = par_rev.bot - par_rev.top;
-
-  p_sz = map(l_size, 25, 250, par_sz.lft, par_sz.rgt);
-  p_minvl = map(minvl, 0, 120, par_min.lft, par_min.rgt);
-  p_maxvl = map(maxvl, 120, 240, par_max.lft, par_max.rgt);
+  p_sz = map(l_size, 3, 25, par_sz.lft, par_sz.rgt);
 
   draw_param();
   while (isShowingPar)
@@ -240,104 +162,91 @@ void par_screen()
     {
       first = false;
       check_presses(0);
-      if (is_pressed(par_rand))
-      {
-        p_random = true;
-        p_reversed = false;
-        draw_param();
-      }
-      if (is_pressed(par_rev))
-      {
-        p_random = false;
-        p_reversed = true;
-        draw_param();
-      }
       if (is_pressed(par_sz))
       {
         p_sz = pixel_x;
-        l_size = map(pixel_x, par_sz.lft, par_sz.rgt, 25, 250);
-        l_scale = 270 / l_size;
-        draw_param();
-      }
-      if (is_pressed(par_min))
-      {
-        p_minvl = pixel_x;
-        minvl = map(pixel_x, par_min.lft, par_min.rgt, 0, 120);
-        draw_param();
-      }
-      if (is_pressed(par_max))
-      {
-        p_maxvl = pixel_x;
-        maxvl = map(pixel_x, par_max.lft, par_max.rgt, 120, 240);
+        l_size = map(pixel_x, par_sz.lft, par_sz.rgt, 3, 25);
         draw_param();
       }
     }
   }
 }
 
-void l_selectionSort()
+void drawline(float x4, float y4)
 {
-  uint8_t i, j, min_idx;
-  // One by one move boundary of unsorted subarray
-  for (i = 0; i < l_size - 1; i++)
+  float x1, x2, x3, y1, y2, y3;
+  x3 = posX;
+  y3 = posY;
+  int16_t recX = x4;//punc de intersectie cele mai apropiate
+  int16_t recY = y4;
+  int16_t reclen = abs(posX - recX) + abs( posY - recY);
+  for (uint8_t i = 0; i < l_size; i++)
   {
-    tft.drawRect(l_scale * i, MAX_Y - l_array[i], l_scale, l_array[i], GREEN);
-    // Find the minimum element in unsorted array
-    min_idx = i;
-    for (j = i + 1; j < l_size; j++)
+    x1 = l_array[i][0];
+    y1 = l_array[i][1];
+    x2 = l_array[i][2];
+    y2 = l_array[i][3];
+    float den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    float t = ((float)((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4))) / den;
+    float u = -((float)((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3))) / den;
+    if (t > 0 && t < 1 && u > 0)
     {
-      check_presses(100);
-      while (!isRunning)
+      int16_t tX = x1 + t * (float(x2 - x1)); //temporary x, y and len
+      int16_t tY = y1 + t * (float(y2 - y1));
+      int16_t tlen = abs(posX - tX) + abs(posY - tY);
+      if (tlen < reclen)
       {
-        check_presses(30000);
-        if (isShowingPar || isShowingInfo)
-        {
-          break;
-        }
+        recX = tX;
+        recY = tY;
+        reclen = tlen;
       }
-      if (isShowingPar || isShowingInfo)
-      {
-        break;
-      }
-      if (l_array[j] < l_array[min_idx])
-      {
-        tft.drawRect(l_scale * j, MAX_Y - l_array[j], l_scale, l_array[j], RED);
-        tft.drawRect(l_scale * min_idx, MAX_Y - l_array[min_idx], l_scale, l_array[min_idx], WHITE);
-        min_idx = j;
-      }
-
     }
-    if (isShowingPar || isShowingInfo)
-    {
-      break;
-    }
-    // Swap the found minimum element with the first element
-    tft.drawRect(l_scale * min_idx, MAX_Y - l_array[min_idx], l_scale, l_array[min_idx], BLACK);
-    tft.drawRect(l_scale * min_idx, MAX_Y - l_array[i], l_scale, l_array[i], WHITE);
-    tft.fillRect(l_scale * i, 0, l_scale, MAX_Y, BLACK);
-    uint8_t temp = l_array[min_idx];
-    l_array[min_idx] = l_array[i];
-    l_array[i] = temp;
-    tft.drawRect(l_scale * i, MAX_Y - l_array[i], l_scale, l_array[i], GREEN);
-    // delay(25);
-
   }
+  tft.drawLine(posX, posY, recX, recY, WHITE);
+}
+
+void l_raycast()
+{
+  posX = pixel_x;
+  posY = pixel_y;
+  uint16_t targX, targY;
+  targY = 0;
+  for (int16_t targX = 0; targX <= MAX_X - 50; targX += 10)
+  {
+    drawline(targX, targY);
+  }
+  targX = MAX_X - 50;
+  for (int16_t targY = 0; targY <= MAX_Y; targY += 10)
+  {
+    drawline(targX, targY);
+  }
+  targY = MAX_Y;
+  for (int16_t targX = MAX_X - 50; targX >= 0 && targX <= MAX_X - 50 + 1; targX -= 10)
+  {
+    drawline(targX, targY);
+  }
+  targX = 0;
+  for (int16_t targY = MAX_Y; targY >= 0 && targY <= MAX_Y + 1; targY -= 10)
+  {
+    drawline(targX, targY);
+  }
+  targY = 0;
 }
 
 void info_screen()
 {
-  tft.fillRect(0, 0, 320, 240, BLACK);
+  tft.fillRect(0, 0, MAX_X, MAX_Y, BLACK);
   uint8_t scr_index = 1;
   while (isShowingInfo)
   {
-    char* scr_str = "selsortx.bmp";
+    char* scr_str = "raycastx.bmp";
     scr_str[7] = scr_index + '0';
     bmpDraw(infoback, scr_str, 0, 0);
-    bmpDraw(infoext, "exit.bmp",MAX_X-52, 10);
-    if(scr_index!=max_page)
-    bmpDraw(inforgt, "right.bmp", MAX_X - 37 - 15, MAX_Y - 45);
-    if(scr_index!=1)
-    bmpDraw(infolft, "left.bmp", 15, MAX_Y - 45);
+    bmpDraw(infoext, "exit.bmp", MAX_X - 52, 10);
+    if (scr_index != max_page)
+      bmpDraw(inforgt, "right.bmp", MAX_X - 37 - 15, MAX_Y - 45);
+    if (scr_index != 1)
+      bmpDraw(infolft, "left.bmp", 15, MAX_Y - 45);
     while (1)
     {
       if (Touch_getXY())
@@ -376,28 +285,21 @@ void check_presses(int CD)
 {
   if (pressCD > CD)
   {
-    if (Touch_getXY())
+    if (is_pressed(homeb))
     {
-      if (is_pressed(homeb))
-      {
-        load_home();
-      }
-      if (is_pressed(infob))
-      {
-        isShowingInfo = !isShowingInfo;
-        Serial.println("Send help");
-      }
-      if (is_pressed(parb))
-      {
-        isShowingPar = !isShowingPar;
-        Serial.println("Settings");
-      }
-      if (is_pressed(playb))
-      {
-        isRunning = !isRunning;
-        if (isRunning) bmpDraw(pauseb, "pause.bmp", MAX_X - 45, MAX_Y - 45);
-        else bmpDraw(playb, "play.bmp", MAX_X - 45, MAX_Y - 45);
-      }
+      load_home();
+    }
+    if (is_pressed(infob))
+    {
+      isShowingInfo = !isShowingInfo;
+    }
+    if (is_pressed(restb))
+    {
+      l_setup();
+    }
+    if (is_pressed(parb))
+    {
+      isShowingPar = !isShowingPar;
     }
   }
   pressCD++;
@@ -405,20 +307,36 @@ void check_presses(int CD)
 
 void loop()//////////////////////////////////////////////////////////////////////////////////////////
 {
-  tft.fillRect(0, 0, 320, 240, BLACK);
+  tft.fillRect(0, 0, MAX_X, MAX_Y, BLACK);
   draw_ui();
   l_setup();
-  l_update();
-  l_selectionSort();
-  if (isShowingInfo)
+  pixel_x = posX;
+  pixel_y = posY;
+  l_raycast();
+  while (1)
   {
-    info_screen();
+    if (Touch_getXY())
+    {
+      if (pixel_x < MAX_X - 50)
+      {
+        l_update();
+        l_raycast();
+      }
+      else check_presses(0);
+    }
+    if (isShowingInfo)
+    {
+      info_screen();
+      tft.fillRect(0, 0, MAX_X, MAX_Y, BLACK);
+      draw_ui();
+      l_update();
+    }
+    if (isShowingPar)
+    {
+      par_screen();
+      draw_ui();
+    }
   }
-  if (isShowingPar)
-  {
-    par_screen();
-  }
-  isRunning = false;
 }//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 bool Touch_getXY(void)
