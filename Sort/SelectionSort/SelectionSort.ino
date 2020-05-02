@@ -31,8 +31,6 @@
 Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, A4);
 TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 
-Adafruit_GFX_Button on_btn, off_btn;
-
 #define MINPRESSURE 200
 #define MAXPRESSURE 1000
 
@@ -57,12 +55,12 @@ struct BTN {
   int w, h;
 } homeb, infob, pauseb, playb, parb;
 
-int pressCD = 0;
+uint32_t pressCD = 0;
 
 uint8_t l_array[250];
 uint8_t l_size = 100;
 uint8_t l_scale;
-uint8_t minvl = 0,maxvl = 240;
+uint8_t minvl = 0, maxvl = 240;
 bool p_random = false;
 bool p_reversed = true;
 
@@ -77,12 +75,9 @@ void setup()
   uint16_t identifier = tft.readID();
   tft.begin(identifier);
 
-  progmemPrint(PSTR("Initializing SD card..."));
   if (!SD.begin(SD_CS)) {
-    progmemPrintln(PSTR("failed!"));
     return;
   }
-  progmemPrintln(PSTR("OK!"));
   tft.fillScreen(0);
   tft.setRotation(1);
 
@@ -115,15 +110,15 @@ bool is_pressed(BTN btn)
 void l_setup()
 {
   l_scale = 270 / l_size;
-  if(p_random)
+  if (p_random)
   {
     for (int i = 0; i < l_size; i++)
-       l_array[i] = (random(minvl, maxvl));
+      l_array[i] = (random(minvl, maxvl));
   }
-  else{
+  else {
     for (int i = 0; i < l_size; i++)
-       l_array[i] = map(i,l_size, 0,minvl, maxvl);
-  }  
+      l_array[i] = map(i, l_size, 0, minvl, maxvl);
+  }
 }
 
 void l_update()
@@ -145,15 +140,15 @@ void draw_param()
   tft.drawRect(par_rand.lft, par_rand.top, par_rand.w, par_rand.h, GREEN);
   tft.drawRect(par_rev.lft, par_rev.top, par_rev.w, par_rev.h, GREEN);
 
-  tft.fillRect(par_sz.lft+1, par_sz.top+1, par_sz.rgt-par_sz.lft-2, 8, BLACK);
-  tft.fillRect(par_sz.lft+1, par_sz.top+1, p_sz -par_sz.lft -2, 8, GREEN);
-  
-  tft.fillRect(par_min.lft+1, par_min.top+1, par_min.rgt-par_min.lft-2, 8, BLACK);
-  tft.fillRect(par_min.lft+1, par_min.top+1, p_minvl -par_min.lft -2, 8, GREEN);
-  
-  tft.fillRect(par_max.lft+1, par_max.top+1, par_max.rgt - par_max.lft-2, 8, BLACK);
-  tft.fillRect(par_max.lft+1, par_max.top+1, p_maxvl -par_max.lft -2, 8, GREEN);
-    
+  tft.fillRect(par_sz.lft + 1, par_sz.top + 1, par_sz.rgt - par_sz.lft - 2, 8, BLACK);
+  tft.fillRect(par_sz.lft + 1, par_sz.top + 1, p_sz - par_sz.lft - 2, 8, GREEN);
+
+  tft.fillRect(par_min.lft + 1, par_min.top + 1, par_min.rgt - par_min.lft - 2, 8, BLACK);
+  tft.fillRect(par_min.lft + 1, par_min.top + 1, p_minvl - par_min.lft - 2, 8, GREEN);
+
+  tft.fillRect(par_max.lft + 1, par_max.top + 1, par_max.rgt - par_max.lft - 2, 8, BLACK);
+  tft.fillRect(par_max.lft + 1, par_max.top + 1, p_maxvl - par_max.lft - 2, 8, GREEN);
+
   tft.setTextSize(2);
   tft.setCursor(25, 25);
   tft.println("Array size:");
@@ -169,7 +164,7 @@ void draw_param()
   tft.println("Reversed:");
 
   tft.setCursor(5, 50);
-  tft.println("100");
+  tft.println("25");
   tft.setCursor(225, 50);
   tft.println("250");
 
@@ -205,13 +200,13 @@ void par_screen()
   par_sz.rgt = 220;
   par_sz.w = par_sz.rgt - par_sz.lft;
   par_sz.h = par_sz.bot - par_sz.top;
-  
+
   par_min.top = 100;
   par_min.bot = 110;
   par_min.lft = 30;
   par_min.rgt = 220;
   par_min.w = par_min.rgt - par_min.lft;
-  par_min.h = par_min.bot - par_min.top; 
+  par_min.h = par_min.bot - par_min.top;
 
   par_max.top = 150;
   par_max.bot = 160;
@@ -219,25 +214,25 @@ void par_screen()
   par_max.rgt = 220;
   par_max.w = par_max.rgt - par_max.lft;
   par_max.h = par_max.bot - par_max.top;
-  
+
   par_rand.top = 185;
   par_rand.bot = 225;
   par_rand.lft = 75;
   par_rand.rgt = 115;
   par_rand.w = par_rand.rgt - par_rand.lft;
   par_rand.h = par_rand.bot - par_rand.top;
-  
+
   par_rev.top = 185;
   par_rev.bot = 225;
   par_rev.lft = 155;
   par_rev.rgt = 195;
   par_rev.w = par_rev.rgt - par_rev.lft;
   par_rev.h = par_rev.bot - par_rev.top;
-  
-  p_sz = l_size;
+
+  p_sz = map(l_size, 25, 250, par_sz.lft, par_sz.rgt);
   p_minvl = map(minvl, 0, 120, par_min.lft, par_min.rgt);
   p_maxvl = map(maxvl, 120, 240, par_max.lft, par_max.rgt);
-  
+
   draw_param();
   while (isShowingPar)
   {
@@ -258,21 +253,21 @@ void par_screen()
         draw_param();
       }
       if (is_pressed(par_sz))
-      {     
-        p_sz = pixel_x;       
-        l_size = map(pixel_x, par_sz.lft, par_sz.rgt, 100, 250);
+      {
+        p_sz = pixel_x;
+        l_size = map(pixel_x, par_sz.lft, par_sz.rgt, 25, 250);
         l_scale = 270 / l_size;
         draw_param();
       }
       if (is_pressed(par_min))
-      {     
-        p_minvl = pixel_x;       
+      {
+        p_minvl = pixel_x;
         minvl = map(pixel_x, par_min.lft, par_min.rgt, 0, 120);
         draw_param();
       }
       if (is_pressed(par_max))
-      {     
-        p_maxvl = pixel_x;       
+      {
+        p_maxvl = pixel_x;
         maxvl = map(pixel_x, par_max.lft, par_max.rgt, 120, 240);
         draw_param();
       }
@@ -291,16 +286,16 @@ void l_selectionSort()
     min_idx = i;
     for (j = i + 1; j < l_size; j++)
     {
-      check_presses(0);
+      check_presses(100);
       while (!isRunning)
       {
-        check_presses(250);
-        if (isShowingPar)
+        check_presses(30000);
+        if (isShowingPar || isShowingInfo)
         {
           break;
         }
       }
-      if (isShowingPar)
+      if (isShowingPar || isShowingInfo)
       {
         break;
       }
@@ -309,17 +304,17 @@ void l_selectionSort()
         tft.drawRect(l_scale * j, MAX_Y - l_array[j], l_scale, l_array[j], RED);
         tft.drawRect(l_scale * min_idx, MAX_Y - l_array[min_idx], l_scale, l_array[min_idx], WHITE);
         min_idx = j;
-        delay(25);
       }
 
     }
-    if (isShowingPar)
+    if (isShowingPar || isShowingInfo)
     {
       break;
     }
     // Swap the found minimum element with the first element
+    tft.drawRect(l_scale * min_idx, MAX_Y - l_array[min_idx], l_scale, l_array[min_idx], BLACK);
     tft.drawRect(l_scale * min_idx, MAX_Y - l_array[i], l_scale, l_array[i], WHITE);
-    tft.drawRect(l_scale * i, 0, l_scale, MAX_Y, BLACK);
+    tft.fillRect(l_scale * i, 0, l_scale, MAX_Y, BLACK);
     uint8_t temp = l_array[min_idx];
     l_array[min_idx] = l_array[i];
     l_array[i] = temp;
@@ -327,6 +322,29 @@ void l_selectionSort()
     // delay(25);
 
   }
+}
+
+void info_screen()
+{
+  tft.fillRect(0, 0, 320, 240, BLACK);
+  uint8_t scr_index = 1;
+  while (isShowingInfo)
+  {
+    char* scr_str = "infox.bmp";
+    scr_str[4] = scr_index+ '0';
+    Serial.println(scr_str);
+    
+    bmpDraw(playb, scr_str, 0, 0);
+    bmpDraw(homeb, "home.bmp", MAX_X - 45, 5);
+  }
+}
+
+void load_home()
+{
+  Serial.write("MAINMEN.HEX");
+  delay(1000);
+  while (1)
+  {}
 }
 
 void check_presses(int CD)
@@ -337,24 +355,20 @@ void check_presses(int CD)
     {
       if (is_pressed(homeb))
       {
-        pressCD = 0;
-        Serial.println("Take me home");
+        load_home();
       }
       if (is_pressed(infob))
       {
-        pressCD = 0;
         isShowingInfo = !isShowingInfo;
         Serial.println("Send help");
       }
       if (is_pressed(parb))
       {
-        pressCD = 0;
         isShowingPar = !isShowingPar;
         Serial.println("Settings");
       }
       if (is_pressed(playb))
       {
-        pressCD = 0;
         isRunning = !isRunning;
         if (isRunning) bmpDraw(pauseb, "pause.bmp", MAX_X - 45, MAX_Y - 45);
         else bmpDraw(playb, "play.bmp", MAX_X - 45, MAX_Y - 45);
@@ -371,6 +385,10 @@ void loop()/////////////////////////////////////////////////////////////////////
   l_setup();
   l_update();
   l_selectionSort();
+  if (isShowingInfo)
+  {
+    info_screen();
+  }
   if (isShowingPar)
   {
     par_screen();
@@ -401,7 +419,7 @@ bool Touch_getXY(void)
 
 
 #define BUFFPIXEL 20
-void bmpDraw(BTN& btn, char *filename, int x, int y) {
+void bmpDraw(BTN& btn, char *filename, int x, int y) {//modified library example function
 
   File     bmpFile;
   int      bmpWidth, bmpHeight;   // W+H in pixels
@@ -423,7 +441,6 @@ void bmpDraw(BTN& btn, char *filename, int x, int y) {
   if ((x >= tft.width()) || (y >= tft.height())) return;
 
   if ((bmpFile = SD.open(filename)) == NULL) {
-    progmemPrintln(PSTR("File not found"));
     return;
   }
 
@@ -504,7 +521,6 @@ void bmpDraw(BTN& btn, char *filename, int x, int y) {
   }
 
   bmpFile.close();
-  if (!goodBmp) progmemPrintln(PSTR("BMP format not recognized."));
 }
 
 // These read 16- and 32-bit types from the SD card file.
@@ -525,17 +541,4 @@ uint32_t read32(File f) {
   ((uint8_t *)&result)[2] = f.read();
   ((uint8_t *)&result)[3] = f.read(); // MSB
   return result;
-}
-
-// Copy string from flash to serial port
-// Source string MUST be inside a PSTR() declaration!
-void progmemPrint(const char *str) {
-  char c;
-  while (c = pgm_read_byte(str++)) Serial.print(c);
-}
-
-// Same as above, with trailing newline
-void progmemPrintln(const char *str) {
-  progmemPrint(str);
-  Serial.println();
 }
