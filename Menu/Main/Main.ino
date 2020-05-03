@@ -53,7 +53,7 @@ int pixel_x, pixel_y;
 struct BTN {
   uint16_t top, bot, lft, rgt;
   uint16_t w, h;
-} btn1, btn2, btn3, btn4, btn5, btn6, up, down;
+} btn1, btn2, btn3, btn4, btn5, btn6, up, down, bg;
 
 uint8_t scroll_index = 0;
 char* menushex[] = {"SELSORT.HEX","BBLSORT.HEX",
@@ -92,12 +92,7 @@ void setup()
 void draw_ui()
 {
   tft.fillRect(0, 0, 320, 240, BLACK);
-  tft.setTextSize(5);
-  tft.setTextColor(RED);
-  tft.setCursor(50, 5);
-  tft.println("Name");
-  tft.setCursor(50, 50);
-  tft.println("here");
+  bmpDraw(bg, "titlu.bmp", 30,20 );
 
   if ((5 + 2 * scroll_index - (((scroll_index + 2) * 2 + 1) % 6)) < options)
     bmpDraw(btn1, "menu1.bmp", 5, 200 - ((50 * (scroll_index + 2)) % 150));
