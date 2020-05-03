@@ -192,7 +192,6 @@ void par_screen()
   tft.fillRect(0, 0, 320, 240, BLACK);
   bmpDraw(parb, "exit.bmp", MAX_X - 45, MAX_Y - 50);
   bmpDraw(homeb, "home.bmp", MAX_X - 45, 5);
-  bmpDraw(infob, "info.bmp", MAX_X - 45, 45);
   bool first = true;
   par_sz.top = 50;
   par_sz.bot = 60;

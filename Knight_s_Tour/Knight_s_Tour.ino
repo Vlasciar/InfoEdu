@@ -47,31 +47,16 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 #define MAX_X 320
 #define MAX_Y 240
 
-
+#define max_page 5
 int pixel_x, pixel_y;
 
 struct BTN {
-  uint16_t top, bot, lft, rgt;
-  uint16_t w, h;
-} btn1, btn2, btn3, btn4, btn5, btn6, up, down;
+  int top, bot, lft, rgt;
+  int w, h;
+} homeb, infoback, inforgt, infolft;
 
-uint8_t scroll_index = 0;
-char* menushex[] = {"SELSORT.HEX","BBLSORT.HEX",
-                    "QIKSORT.HEX","KNIGHTS.HEX",
-                    "EUCLIDA.HEX","RAYCAST.HEX",
-                    "TOHANOI.HEX","PRIMALG.HEX",
-                    "DIJKSTR.HEX","ASTARPFA.HEX"
-                   };
-char* menus[] = {"Selection Sort", "Bubble Sort",
-                  "Quick Sort", "Knight's Tour",
-                  "Euclidean Alg.","Raycasting",
-                  "Hanoi","Prim's Alg.",
-                  "Dijkstra's Alg.+","A*"
-                };
-uint8_t options;
 uint32_t pressCD = 0;
 
-bool cangoup = false, cangodown = true;
 void setup()
 {
   Serial.begin(9600);
@@ -85,66 +70,8 @@ void setup()
   tft.fillScreen(0);
   tft.setRotation(1);
 
-  options = sizeof(menus) / sizeof(menus[0]);
-  draw_ui();
 }
 
-void draw_ui()
-{
-  tft.fillRect(0, 0, 320, 240, BLACK);
-  tft.setTextSize(5);
-  tft.setTextColor(RED);
-  tft.setCursor(50, 5);
-  tft.println("Name");
-  tft.setCursor(50, 50);
-  tft.println("here");
-
-  if ((5 + 2 * scroll_index - (((scroll_index + 2) * 2 + 1) % 6)) < options)
-    bmpDraw(btn1, "menu1.bmp", 5, 200 - ((50 * (scroll_index + 2)) % 150));
-  if ((5 + 2 * scroll_index - (((scroll_index + 1) * 2 + 1) % 6)) < options)
-    bmpDraw(btn2, "menu2.bmp", 5, 200 - ((50 * (scroll_index + 1)) % 150));
-  if ((5 + 2 * scroll_index - (((scroll_index) * 2 + 1) % 6)) < options)
-    bmpDraw(btn3, "menu3.bmp", 5, 200 - ((50 * (scroll_index)) % 150));
-
-  if ((5 + 2 * scroll_index - (((scroll_index + 2) * 2) % 6)) < options)
-    bmpDraw(btn4, "menu1.bmp", 140, 200 - ((50 * (scroll_index + 2)) % 150));
-  if ((5 + 2 * scroll_index - (((scroll_index + 1) * 2) % 6)) < options)
-    bmpDraw(btn5, "menu2.bmp", 140, 200 - ((50 * (scroll_index + 1)) % 150));
-  if ((5 + 2 * scroll_index - (((scroll_index) * 2) % 6)) < options)
-    bmpDraw(btn6, "menu3.bmp", 140, 200 - ((50 * (scroll_index)) % 150));
-
-  uint8_t i = 2 * scroll_index;
-  tft.setTextSize(1);
-  tft.setTextColor(WHITE);
-
-  for (uint8_t y = 0; y < 3; y++)
-  {
-    for (uint8_t x = 0; x < 2; x++)
-    {
-      if (i >= options) break;
-      tft.setCursor(8 + x * 140, 110 + y * 50);
-      tft.print(i + 1);
-      tft.print(")");
-      tft.print(menus[i]);
-      i++;
-    }
-  }
-
-  if (scroll_index != 0)
-  {
-    bmpDraw(up, "up.bmp", MAX_X - 45, 5);
-    cangoup = true;
-  }
-  else cangoup = false;
-
-  if (2 * scroll_index + 6 <= options)
-  {
-    cangodown = true;
-    bmpDraw(down, "down.bmp", MAX_X - 45, MAX_Y - 45);
-  }
-  else cangodown = false;
-
-}
 
 bool is_pressed(BTN btn)
 {
@@ -156,76 +83,65 @@ bool is_pressed(BTN btn)
   return false;
 }
 
-void load(int i)
+void info_screen()
 {
-  Serial.write(menushex[i]);
+  tft.fillRect(0, 0, 320, 240, BLACK);
+  uint8_t scr_index = 1;
+  while (1)
+  {
+    char* scr_str = "knightx.bmp";
+    scr_str[6] = scr_index + '0';
+    bmpDraw(infoback, scr_str, 0, 0);
+    bmpDraw(homeb, "home.bmp",MAX_X-46, 13);
+    if(scr_index!=max_page)
+    bmpDraw(inforgt, "right.bmp", MAX_X - 37 - 15, MAX_Y - 45);
+    if(scr_index!=1)
+    bmpDraw(infolft, "left.bmp", 15, MAX_Y - 45);
+    Serial.println(scr_str);
+    while (1)
+    {
+      if (Touch_getXY())
+      {
+        {
+          if (is_pressed(homeb))
+          {
+            load_home();
+            break;
+          }
+          if (is_pressed(inforgt) && scr_index < max_page)
+          {
+            scr_index++;
+            break;
+          }
+          if (is_pressed(infolft) && scr_index > 1)
+          {
+            scr_index--;
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
+void load_home()
+{
+  Serial.write("MAINMEN.HEX");
   delay(1000);
   while (1)
   {}
 }
-void check_presses(int CD)
-{
-  if (pressCD > CD)
-  {
-    if (Touch_getXY())
-    {
-      if (cangoup && is_pressed(up))
-      {
-        scroll_index--;
-        draw_ui();
-      }
-      if (cangodown && is_pressed(down))
-      {
-        scroll_index++;
-        draw_ui();
-      }
-      if (is_pressed(btn1))
-      {
-        uint8_t i = (5 + 2 * scroll_index - (((scroll_index + 2) * 2 + 1) % 6));
-        load(i);
-      }
-      if (is_pressed(btn2))
-      {
-        uint8_t i = (5 + 2 * scroll_index - (((scroll_index + 1) * 2 + 1) % 6));
-        load(i);
-      }
-      if (is_pressed(btn3))
-      {
-        uint8_t i = (5 + 2 * scroll_index - (((scroll_index) * 2 + 1) % 6));
-        load(i);
-      }
-      if (is_pressed(btn4))
-      {
-        uint8_t i = (5 + 2 * scroll_index - (((scroll_index + 2) * 2) % 6));
-        load(i);
-      }
-      if (is_pressed(btn5))
-      {
-        uint8_t i = (5 + 2 * scroll_index - (((scroll_index + 1) * 2) % 6));
-        load(i);
-      }
-      if (is_pressed(btn6))
-      {
-        uint8_t i = (5 + 2 * scroll_index - (((scroll_index) * 2) % 6));
-        load(i);
-      }
-    }
-  }
-  if (pressCD < 30000)
-    pressCD++;
-}
 
 void loop()//////////////////////////////////////////////////////////////////////////////////////////
 {
-  while (1)
-  {
-    check_presses(25000);
-  }
+  info_screen(); 
 }//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 bool Touch_getXY(void)
 {
   TSPoint p = ts.getPoint();
+  //p.x = 1048-p.x;
+  // p.y -= 142;
   pinMode(YP, OUTPUT);      //restore shared pins
   pinMode(XM, OUTPUT);
   digitalWrite(YP, HIGH);   //because TFT control pins
@@ -234,13 +150,17 @@ bool Touch_getXY(void)
   if (pressed) {
     pixel_x = map(p.y, TS_LEFT, TS_RT, 0, tft.width()); //.kbv makes sense to me
     pixel_y = map(p.x, TS_TOP, TS_BOT, 0, tft.height());
+    /* Serial.print(pixel_x);
+      Serial.print("      ");
+      Serial.print(pixel_y);
+      Serial.println();*/
   }
   return pressed;
 }
 
 
 #define BUFFPIXEL 20
-void bmpDraw(BTN& btn, char *filename, int x, int y) {//modified library example function
+void bmpDraw(BTN & btn, char *filename, int x, int y) { //modified library example function
 
   File     bmpFile;
   int      bmpWidth, bmpHeight;   // W+H in pixels
@@ -342,7 +262,6 @@ void bmpDraw(BTN& btn, char *filename, int x, int y) {//modified library example
   }
 
   bmpFile.close();
-  if (!goodBmp) progmemPrintln(PSTR("BMP format not recognized."));
 }
 
 // These read 16- and 32-bit types from the SD card file.
@@ -363,15 +282,4 @@ uint32_t read32(File f) {
   ((uint8_t *)&result)[2] = f.read();
   ((uint8_t *)&result)[3] = f.read(); // MSB
   return result;
-}
-
-// Copy string from flash to serial port
-// Source string MUST be inside a PSTR() declaration!
-void progmemPrint(const char *str) {
-
-}
-
-// Same as above, with trailing newline
-void progmemPrintln(const char *str) {
-
 }
