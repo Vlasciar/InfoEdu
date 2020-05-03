@@ -53,17 +53,18 @@ int pixel_x, pixel_y;
 struct BTN {
   int top, bot, lft, rgt;
   int w, h;
-} homeb, infob, restb, infoback, inforgt, infolft, infoext , parb, par_sz;
+} homeb, infob, pauseb, infoback, inforgt, infolft, infoext;
 
 uint32_t pressCD = 0;
 
-uint8_t l_array[25][4];//X1 Y1     X2 Y2
-uint8_t l_size = 10;
+const uint8_t scale = 8;
+const uint8_t size = 30;
+uint8_t cell[15][15];
+uint8_t wall[200][2];
+int walli;
 
+bool isRunning = false;
 bool isShowingInfo = false;
-bool isShowingPar = false;
-
-int16_t posX, posY;
 
 void setup()
 {
@@ -77,17 +78,20 @@ void setup()
   }
   tft.fillScreen(0);
   tft.setRotation(1);
-  posX = MAX_X / 2;
-  posY = MAX_Y / 2;
+
 }
 
 
 void draw_ui()
 {
+
   bmpDraw(homeb, "home.bmp", MAX_X - 45, 5);
   bmpDraw(infob, "info.bmp", MAX_X - 45, 45);
-  bmpDraw(parb, "par.bmp", MAX_X - 45, 85);
-  bmpDraw(restb, "rest.bmp", MAX_X - 45, MAX_Y - 45);
+  /* isRunning != isRunning;
+    if (isRunning) bmpDraw(pauseb, "pause.bmp", MAX_X - 45, MAX_Y - 45);
+    else bmpDraw(playb, "play.bmp", MAX_X - 45, MAX_Y - 45);*/
+
+
 }
 
 bool is_pressed(BTN btn)
@@ -99,147 +103,132 @@ bool is_pressed(BTN btn)
   }
   return false;
 }
-void l_update()
-{
-  tft.fillRect(0, 0, MAX_X - 50 + 1, MAX_Y, BLACK);
-  for (uint8_t i = 0; i < l_size; i++)
-  {
-    tft.drawLine(l_array[i][0], l_array[i][1], l_array[i][2], l_array[i][3], RED);
-  }
-}
+
 void l_setup()
 {
-  tft.fillRect(0, 0, MAX_X - 50 + 1, MAX_Y, BLACK);
-  for (uint8_t i = 0; i < l_size; i++)
-  {
-    l_array[i][0] = random(0, MAX_X - 50);
-    l_array[i][1] = random(0, MAX_Y);
-    l_array[i][2] = random(0, MAX_X - 50);
-    l_array[i][3] = random(0, MAX_Y);
-    tft.drawLine(l_array[i][0], l_array[i][1], l_array[i][2], l_array[i][3], RED);
-  }
-}
-
-uint8_t p_sz;
-void draw_param()
-{
-  tft.fillRect(0, 0, 270, 240, BLACK);
-  tft.drawRect(par_sz.lft, par_sz.top, par_sz.w, par_sz.h, GREEN);
-
-  tft.fillRect(par_sz.lft + 1, par_sz.top + 1, par_sz.rgt - par_sz.lft - 2, 8, BLACK);
-  tft.fillRect(par_sz.lft + 1, par_sz.top + 1, p_sz - par_sz.lft - 2, 8, GREEN);
-
-
-  tft.setTextSize(2);
-  tft.setCursor(25, 25);
-  tft.println("Number of lines:");
-
-  tft.setCursor(5, 50);
-  tft.println("3");
-  tft.setCursor(225, 50);
-  tft.println("25");
-
-}
-
-void par_screen()
-{
-  tft.fillRect(0, 0, 320, 240, BLACK);
-  bmpDraw(parb, "exit.bmp", MAX_X - 45, MAX_Y - 50);
-  bool first = true;
-  par_sz.top = 50;
-  par_sz.bot = 60;
-  par_sz.lft = 30;
-  par_sz.rgt = 220;
-  par_sz.w = par_sz.rgt - par_sz.lft;
-  par_sz.h = par_sz.bot - par_sz.top;
-
-  p_sz = map(l_size, 3, 25, par_sz.lft, par_sz.rgt);
-
-  draw_param();
-  while (isShowingPar)
-  {
-    if (Touch_getXY() || first)
+  for (uint8_t i = 0; i < size; i++)
+    for (uint8_t j = 0; j < size; j++)
     {
-      first = false;
-      check_presses(0);
-      if (is_pressed(par_sz))
-      {
-        p_sz = pixel_x;
-        l_size = map(pixel_x, par_sz.lft, par_sz.rgt, 3, 25);
-        draw_param();
-      }
+      if (j == 0 || i == 0 || j == size || i == size || i % 2 == 0 || j % 2 == 0)
+        cell[i][j] = 1;
+      else
+        cell[i][j] = 102;
+      if (j + 1 < size)
+        tft.drawLine(scale * i, scale * j, scale * i, scale * (j + 1), RED);
+      if (i + 1 < size)
+        tft.drawLine(scale * i, scale * j, scale * (i + 1), scale * j, RED);
     }
+  cell[1][1] = 0;
+
+  wall[0][0] = 1;
+  wall[0][1] = 2;
+
+  wall[1][0] = 2;
+  wall[1][1] = 1;
+
+  walli = 2;
+}
+
+void add_neighbors(int row, int col)
+{
+  if (cell[row][col + 1] > 0)
+  {
+    wall[walli][0] = row;
+    wall[walli][1] = col + 1;
+    walli++;
+  }
+  if (cell[row][col - 1] > 0)
+  {
+    wall[walli][0] = row;
+    wall[walli][1] = col - 1;
+    walli++;
+  }
+  if (cell[row + 1][col] > 0)
+  {
+    wall[walli][0] = row + 1;
+    wall[walli][1] = col;
+    walli++;
+  }
+  if (cell[row - 1][col] > 0)
+  {
+    wall[walli][0] = row - 1;
+    wall[walli][1] = col;
+    walli++;
+  }
+
+}
+
+void remove_wall(int to_remove)
+{
+  if (wall[to_remove][1] % 2 == 1)
+    tft.drawLine(scale * (wall[to_remove][0] - 1), scale * (wall[to_remove][1] - 1), scale * (wall[to_remove][0]), scale * (wall[to_remove][1] - 1), GREEN);
+  else
+    tft.drawLine(scale * (wall[to_remove][0] - 1), scale * (wall[to_remove][1] - 1), scale * (wall[to_remove][0] - 1), scale * (wall[to_remove][1]), GREEN);
+  for (int i = to_remove; i < walli; i++)
+  {
+    wall[i][0] = wall[i + 1][0];
+    wall[i][1] = wall[i + 1][1];
+  }
+  walli--;
+}
+
+void check_neighbors(int check_index)
+{
+  int c_row = wall[check_index][0];
+  int c_col = wall[check_index][1];
+  if (cell[c_row][c_col + 1] > 100 && cell[c_row][c_col - 1] == 0)
+  {
+    cell[c_row][c_col] = 0;
+    cell[c_row][c_col + 1] = 0;
+    add_neighbors(c_row, c_col + 1);
+  }
+  else if (cell[c_row][c_col - 1] > 100 && cell[c_row][c_col + 1] == 0)
+  {
+    cell[c_row][c_col] = 0;
+    cell[c_row][c_col - 1] = 0;
+    add_neighbors(c_row, c_col - 1);
+  }
+  else if (cell[c_row + 1][c_col] > 100 && cell[c_row - 1][c_col] == 0)
+  {
+    cell[c_row][c_col] = 0;
+    cell[c_row + 1][c_col] = 0;
+    add_neighbors(c_row + 1, c_col);
+  }
+  else if (cell[c_row - 1][c_col] > 100 && cell[c_row + 1][c_col] == 0)
+  {
+    cell[c_row][c_col] = 0;
+    cell[c_row - 1][c_col] = 0;
+    add_neighbors(c_row - 1, c_col);
   }
 }
 
-void drawline(float x4, float y4)
+boolean isEdge(int check_index)
 {
-  float x1, x2, x3, y1, y2, y3;
-  x3 = posX;
-  y3 = posY;
-  int16_t recX = x4;//punc de intersectie cele mai apropiate
-  int16_t recY = y4;
-  int16_t reclen = abs(posX - recX) + abs( posY - recY);
-  for (uint8_t i = 0; i < l_size; i++)
-  {
-    x1 = l_array[i][0];
-    y1 = l_array[i][1];
-    x2 = l_array[i][2];
-    y2 = l_array[i][3];
-    float den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-    float t = ((float)((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4))) / den;
-    float u = -((float)((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3))) / den;
-    if (t > 0 && t < 1 && u > 0)
-    {
-      int16_t tX = x1 + t * (float(x2 - x1)); //temporary x, y and len
-      int16_t tY = y1 + t * (float(y2 - y1));
-      int16_t tlen = abs(posX - tX) + abs(posY - tY);
-      if (tlen < reclen)
-      {
-        recX = tX;
-        recY = tY;
-        reclen = tlen;
-      }
-    }
-  }
-  tft.drawLine(posX, posY, recX, recY, WHITE);
+  int c_row = wall[check_index][0];
+  int c_col = wall[check_index][1];
+  if (c_col == 0 || c_row == 0 || c_col == size || c_row == size)
+    return true;
+  else return false;
 }
 
-void l_raycast()
+void l_prim()
 {
-  posX = pixel_x;
-  posY = pixel_y;
-  uint16_t targX, targY;
-  targY = 0;
-  for (int16_t targX = 0; targX <= MAX_X - 50; targX += 10)
+  while (walli > 0)
   {
-    drawline(targX, targY);
+    int next_visit = random(0, walli);
+    if (!isEdge(next_visit))
+      check_neighbors(next_visit);
+    remove_wall(next_visit);
   }
-  targX = MAX_X - 50;
-  for (int16_t targY = 0; targY <= MAX_Y; targY += 10)
-  {
-    drawline(targX, targY);
-  }
-  targY = MAX_Y;
-  for (int16_t targX = MAX_X - 50; targX >= 0 && targX <= MAX_X - 50 + 1; targX -= 10)
-  {
-    drawline(targX, targY);
-  }
-  targX = 0;
-  for (int16_t targY = MAX_Y; targY >= 0 && targY <= MAX_Y + 1; targY -= 10)
-  {
-    drawline(targX, targY);
-  }
-  targY = 0;
 }
 
 void info_screen()
 {
-  tft.fillRect(0, 0, MAX_X, MAX_Y, BLACK);
+  tft.fillRect(0, 0, 320, 240, BLACK);
   uint8_t scr_index = 1;
   while (isShowingInfo)
   {
-    char* scr_str = "raycastx.bmp";
+    char* scr_str = "selsortx.bmp";
     scr_str[7] = scr_index + '0';
     bmpDraw(infoback, scr_str, 0, 0);
     bmpDraw(infoext, "exit.bmp", MAX_X - 52, 10);
@@ -285,21 +274,23 @@ void check_presses(int CD)
 {
   if (pressCD > CD)
   {
-    if (is_pressed(homeb))
+    if (Touch_getXY())
     {
-      load_home();
-    }
-    if (is_pressed(infob))
-    {
-      isShowingInfo = !isShowingInfo;
-    }
-    if (is_pressed(restb))
-    {
-      l_setup();
-    }
-    if (is_pressed(parb))
-    {
-      isShowingPar = !isShowingPar;
+      if (is_pressed(homeb))
+      {
+        load_home();
+      }
+      if (is_pressed(infob))
+      {
+        isShowingInfo = !isShowingInfo;
+        Serial.println("Send help");
+      }
+      /* if (is_pressed(playb))
+        {
+         isRunning = !isRunning;
+         if (isRunning) bmpDraw(pauseb, "pause.bmp", MAX_X - 45, MAX_Y - 45);
+         else bmpDraw(playb, "play.bmp", MAX_X - 45, MAX_Y - 45);
+        }*/
     }
   }
   pressCD++;
@@ -307,35 +298,13 @@ void check_presses(int CD)
 
 void loop()//////////////////////////////////////////////////////////////////////////////////////////
 {
-  tft.fillRect(0, 0, MAX_X, MAX_Y, BLACK);
+  tft.fillRect(0, 0, 320, 240, BLACK);
   draw_ui();
   l_setup();
-  pixel_x = posX;
-  pixel_y = posY;
-  l_raycast();
-  while (1)
+  l_prim();
+  if (isShowingInfo)
   {
-    if (Touch_getXY())
-    {
-      if (pixel_x < MAX_X - 50)
-      {
-        l_update();
-        l_raycast();
-      }
-      else check_presses(0);
-    }
-    if (isShowingInfo)
-    {
-      info_screen();
-      tft.fillRect(0, 0, MAX_X, MAX_Y, BLACK);
-      draw_ui();
-      l_update();
-    }
-    if (isShowingPar)
-    {
-      par_screen();
-      draw_ui();
-    }
+    info_screen();
   }
 }//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 

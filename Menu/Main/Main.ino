@@ -56,9 +56,15 @@ struct BTN {
 } btn1, btn2, btn3, btn4, btn5, btn6, up, down;
 
 uint8_t scroll_index = 0;
-char* menushex[] = {"SELSORT.HEX"
+char* menushex[] = {"SELSORT.HEX","BBLSORT.HEX",
+                    "EUCLIDA.HEX","RAYCAST.HEX",
+                    "TOHANOI.HEX","PRIMALG.HEX",
+                    "DIJKSTR.HEX","ASTARPFA.HEX"
                    };
-char* menus[] = {"Selection Sort",
+char* menus[] = {"Selection Sort", "Bubble Sort",
+                  "Euclidean Alg.","Raycasting",
+                  "Hanoi","Prim's Alg.",
+                  "Dijkstra's Alg.+","A*"
                 };
 uint8_t options;
 uint32_t pressCD = 0;
