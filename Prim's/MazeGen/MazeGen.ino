@@ -47,24 +47,28 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 #define MAX_X 320
 #define MAX_Y 240
 
-#define max_page 5
-int pixel_x, pixel_y;
+#define max_page 4
+uint16_t pixel_x, pixel_y;
 
 struct BTN {
-  int top, bot, lft, rgt;
-  int w, h;
-} homeb, infob, pauseb, infoback, inforgt, infolft, infoext;
+  uint16_t top, bot, lft, rgt;
+  uint16_t w, h;
+} homeb, infob, playb,infoback, inforgt, infolft, infoext;
 
 uint32_t pressCD = 0;
 
-const uint8_t scale = 8;
-const uint8_t size = 30;
-uint8_t cell[15][15];
-uint8_t wall[200][2];
+const uint8_t scale = 14;
+const uint8_t size = 17;
+uint8_t cell[16][16];
+uint8_t wall[64][2];
 int walli;
 
-bool isRunning = false;
+bool isRunning = true;
 bool isShowingInfo = false;
+
+uint8_t next_visit;
+uint16_t c_row;
+uint16_t c_col;
 
 void setup()
 {
@@ -87,11 +91,14 @@ void draw_ui()
 
   bmpDraw(homeb, "home.bmp", MAX_X - 45, 5);
   bmpDraw(infob, "info.bmp", MAX_X - 45, 45);
-  /* isRunning != isRunning;
-    if (isRunning) bmpDraw(pauseb, "pause.bmp", MAX_X - 45, MAX_Y - 45);
-    else bmpDraw(playb, "play.bmp", MAX_X - 45, MAX_Y - 45);*/
-
-
+  isRunning != isRunning;
+  if (isRunning) bmpDraw(playb, "pause.bmp", MAX_X - 45, MAX_Y - 45);
+    else bmpDraw(playb, "play.bmp", MAX_X - 45, MAX_Y - 45);
+}
+void erase_lines(uint8_t row, uint8_t col)
+{
+  tft.drawLine(scale * col , scale * (row-1)+1, scale * col, scale * (row+1)-1, BLACK);
+  tft.drawLine(scale * (col-1)+1 , scale * row, scale * (col+1)-1, scale * row, BLACK);
 }
 
 bool is_pressed(BTN btn)
@@ -113,11 +120,19 @@ void l_setup()
         cell[i][j] = 1;
       else
         cell[i][j] = 102;
-      if (j + 1 < size)
-        tft.drawLine(scale * i, scale * j, scale * i, scale * (j + 1), RED);
-      if (i + 1 < size)
-        tft.drawLine(scale * i, scale * j, scale * (i + 1), scale * j, RED);
+      if (cell[i][j]==1)
+      {
+        if(i+1<scale)
+        tft.drawLine(scale * j , scale * i, scale * j, scale * (i+1), RED);
+        if(i-1>0)
+        tft.drawLine(scale * j , scale * i, scale * j, scale * (i-1), RED);
+        if(j+1<scale)
+        tft.drawLine(scale * j , scale * i, scale * (j+1), scale * i, RED);
+        if(j-1>0)
+        tft.drawLine(scale * j , scale * i, scale * (j-1), scale * i, RED);
+      }
     }
+  erase_lines(1,1);
   cell[1][1] = 0;
 
   wall[0][0] = 1;
@@ -129,8 +144,9 @@ void l_setup()
   walli = 2;
 }
 
-void add_neighbors(int row, int col)
+void add_neighbors(uint8_t row, uint8_t col)
 {
+  erase_lines(row,col);
   if (cell[row][col + 1] > 0)
   {
     wall[walli][0] = row;
@@ -158,13 +174,9 @@ void add_neighbors(int row, int col)
 
 }
 
-void remove_wall(int to_remove)
+void remove_wall(uint8_t to_remove)
 {
-  if (wall[to_remove][1] % 2 == 1)
-    tft.drawLine(scale * (wall[to_remove][0] - 1), scale * (wall[to_remove][1] - 1), scale * (wall[to_remove][0]), scale * (wall[to_remove][1] - 1), GREEN);
-  else
-    tft.drawLine(scale * (wall[to_remove][0] - 1), scale * (wall[to_remove][1] - 1), scale * (wall[to_remove][0] - 1), scale * (wall[to_remove][1]), GREEN);
-  for (int i = to_remove; i < walli; i++)
+  for (uint16_t i = to_remove; i < walli; i++)
   {
     wall[i][0] = wall[i + 1][0];
     wall[i][1] = wall[i + 1][1];
@@ -172,52 +184,64 @@ void remove_wall(int to_remove)
   walli--;
 }
 
-void check_neighbors(int check_index)
+void check_neighbors()
 {
-  int c_row = wall[check_index][0];
-  int c_col = wall[check_index][1];
   if (cell[c_row][c_col + 1] > 100 && cell[c_row][c_col - 1] == 0)
   {
     cell[c_row][c_col] = 0;
     cell[c_row][c_col + 1] = 0;
     add_neighbors(c_row, c_col + 1);
+    erase_lines(c_row,c_col);
   }
   else if (cell[c_row][c_col - 1] > 100 && cell[c_row][c_col + 1] == 0)
   {
     cell[c_row][c_col] = 0;
     cell[c_row][c_col - 1] = 0;
     add_neighbors(c_row, c_col - 1);
+    erase_lines(c_row,c_col);
   }
   else if (cell[c_row + 1][c_col] > 100 && cell[c_row - 1][c_col] == 0)
   {
     cell[c_row][c_col] = 0;
     cell[c_row + 1][c_col] = 0;
     add_neighbors(c_row + 1, c_col);
+    erase_lines(c_row,c_col);
   }
   else if (cell[c_row - 1][c_col] > 100 && cell[c_row + 1][c_col] == 0)
   {
     cell[c_row][c_col] = 0;
     cell[c_row - 1][c_col] = 0;
     add_neighbors(c_row - 1, c_col);
+    erase_lines(c_row,c_col);
   }
 }
 
-boolean isEdge(int check_index)
+boolean isEdge()
 {
-  int c_row = wall[check_index][0];
-  int c_col = wall[check_index][1];
   if (c_col == 0 || c_row == 0 || c_col == size || c_row == size)
     return true;
   else return false;
 }
-
 void l_prim()
 {
   while (walli > 0)
   {
-    int next_visit = random(0, walli);
-    if (!isEdge(next_visit))
-      check_neighbors(next_visit);
+    for(uint8_t i=0;i<50;i++)//delay
+    {
+    check_presses(200);
+    while(!isRunning)
+    {
+      check_presses(30000);
+      if(isShowingInfo)break;
+    }
+    if(isShowingInfo)break;
+    }
+    if(isShowingInfo)break;
+    next_visit = random(0, walli);
+    c_row = wall[next_visit][0];
+    c_col = wall[next_visit][1];
+    if (!isEdge())
+      check_neighbors();
     remove_wall(next_visit);
   }
 }
@@ -228,8 +252,8 @@ void info_screen()
   uint8_t scr_index = 1;
   while (isShowingInfo)
   {
-    char* scr_str = "selsortx.bmp";
-    scr_str[7] = scr_index + '0';
+    char* scr_str = "primsx.bmp";
+    scr_str[5] = scr_index + '0';
     bmpDraw(infoback, scr_str, 0, 0);
     bmpDraw(infoext, "exit.bmp", MAX_X - 52, 10);
     if (scr_index != max_page)
@@ -285,12 +309,12 @@ void check_presses(int CD)
         isShowingInfo = !isShowingInfo;
         Serial.println("Send help");
       }
-      /* if (is_pressed(playb))
+       if (is_pressed(playb))
         {
          isRunning = !isRunning;
-         if (isRunning) bmpDraw(pauseb, "pause.bmp", MAX_X - 45, MAX_Y - 45);
+         if (isRunning) bmpDraw(playb, "pause.bmp", MAX_X - 45, MAX_Y - 45);
          else bmpDraw(playb, "play.bmp", MAX_X - 45, MAX_Y - 45);
-        }*/
+        }
     }
   }
   pressCD++;
@@ -302,10 +326,9 @@ void loop()/////////////////////////////////////////////////////////////////////
   draw_ui();
   l_setup();
   l_prim();
-  if (isShowingInfo)
+  if(isShowingInfo) 
   {
-    info_screen();
-  }
+    info_screen();  }
 }//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 bool Touch_getXY(void)
