@@ -86,15 +86,12 @@ void setup()
 
 void draw_ui()
 {
-
   bmpDraw(homeb, "home.bmp", MAX_X - 45, 5);
   bmpDraw(infob, "info.bmp", MAX_X - 45, 45);
   bmpDraw(parb, "par.bmp", MAX_X - 45, 85);
   isRunning != isRunning;
   if (isRunning) bmpDraw(pauseb, "pause.bmp", MAX_X - 45, MAX_Y - 45);
   else bmpDraw(playb, "play.bmp", MAX_X - 45, MAX_Y - 45);
-
-
 }
 
 bool is_pressed(BTN btn)
@@ -191,7 +188,6 @@ void par_screen()
 {
   tft.fillRect(0, 0, 320, 240, BLACK);
   bmpDraw(parb, "exit.bmp", MAX_X - 45, MAX_Y - 50);
-  bmpDraw(homeb, "home.bmp", MAX_X - 45, 5);
   bool first = true;
   par_sz.top = 50;
   par_sz.bot = 60;
