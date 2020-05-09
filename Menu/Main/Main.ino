@@ -60,13 +60,17 @@ char* menushex[] = {"SELSORT.HEX","BBLSORT.HEX",
                     "QIKSORT.HEX","KNIGHTS.HEX",
                     "EUCLIDA.HEX","RAYCAST.HEX",
                     "TOHANOI.HEX","PRIMALG.HEX",
-                    "DIJKSTR.HEX","ASTARPFA.HEX"
+                    "DIJKSTR.HEX","ASTARPFA.HEX",
+                    "MINIMAX.HEX","FLOODFL.HEX",
+                    "LINECLP.HEX"
                    };
 char* menus[] = {"Selection Sort", "Bubble Sort",
                   "Quick Sort", "Knight's Tour",
                   "Euclidean Alg.","Raycasting",
                   "Hanoi","Prim's Alg.",
-                  "Dijkstra's Alg.+","A*"
+                  "Dijkstra's Alg.+","A*",
+                  "Minimax Alg.","Flood Fill",
+                  "Line Clipping"
                 };
 uint8_t options;
 uint32_t pressCD = 0;
