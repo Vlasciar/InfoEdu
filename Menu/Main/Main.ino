@@ -71,6 +71,7 @@ char* menus[] = {"Selection Sort", "Bubble Sort",
                   "Dijkstra's Alg.+","A*",
                   "Minimax Alg.","Flood Fill",
                   "Line Clipping"
+                  
                 };
 uint8_t options;
 uint32_t pressCD = 0;
